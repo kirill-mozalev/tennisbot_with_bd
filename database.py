@@ -1,20 +1,22 @@
 import sqlite3
+import logging
 from config import DATABASE_NAME
+
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 def create_connection():
     """Создает соединение с базой данных."""
-    conn = sqlite3.connect(DATABASE_NAME, check_same_thread=False)
-    return conn
+    return sqlite3.connect(DATABASE_NAME, check_same_thread=False)
 
 def initialize_database():
     """Инициализирует таблицы в базе данных."""
     conn = create_connection()
     cursor = conn.cursor()
-
-    # Удаляем таблицы, если они существуют
-    cursor.execute('DROP TABLE IF EXISTS matches')
-    cursor.execute('DROP TABLE IF EXISTS players')
-    cursor.execute('DROP TABLE IF EXISTS sessions')
 
     # Создаем таблицу sessions
     cursor.execute('''
@@ -39,7 +41,7 @@ def initialize_database():
     CREATE TABLE IF NOT EXISTS matches (
         match_id INTEGER PRIMARY KEY AUTOINCREMENT,
         session_id INTEGER NOT NULL,
-        round_number INTEGER NOT NULL,  
+        round_number INTEGER NOT NULL,
         player1_id INTEGER NOT NULL,
         player2_id INTEGER NOT NULL,
         winner_id INTEGER,
@@ -52,3 +54,4 @@ def initialize_database():
 
     conn.commit()
     conn.close()
+    logger.info("База данных инициализирована.")

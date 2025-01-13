@@ -1,8 +1,16 @@
-# utils.py
+import logging
 from database import create_connection
 from itertools import combinations
 
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 def generate_matches(session_id, round_number):
+    """Генерирует матчи для текущего круга."""
     conn = create_connection()
     cursor = conn.cursor()
 
@@ -41,6 +49,7 @@ def generate_matches(session_id, round_number):
 
     conn.commit()
     conn.close()
+    logger.info(f"Матчи сгенерированы для сессии {session_id}, круг {round_number}.")
 
 def get_session_stats(session_id):
     """Возвращает общую статистику за все круги."""
@@ -59,6 +68,7 @@ def get_session_stats(session_id):
     stats = cursor.fetchall()
 
     conn.close()
+    logger.info(f"Статистика за сессию {session_id} получена.")
     return stats
 
 def get_current_round_stats(session_id, round_number):
@@ -78,23 +88,5 @@ def get_current_round_stats(session_id, round_number):
     stats = cursor.fetchall()
 
     conn.close()
-    return stats
-
-def get_session_stats(session_id):
-    """Возвращает общую статистику за все круги."""
-    conn = create_connection()
-    cursor = conn.cursor()
-
-    # Получаем статистику побед для каждого игрока за все круги
-    cursor.execute('''
-    SELECT p.name, COUNT(m.winner_id) as wins
-    FROM players p
-    LEFT JOIN matches m ON p.player_id = m.winner_id
-    WHERE p.session_id = ?
-    GROUP BY p.player_id
-    ORDER BY wins DESC
-    ''', (session_id,))
-    stats = cursor.fetchall()
-
-    conn.close()
+    logger.info(f"Статистика за круг {round_number} в сессии {session_id} получена.")
     return stats

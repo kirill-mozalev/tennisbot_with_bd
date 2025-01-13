@@ -5,14 +5,10 @@ from database import create_connection
 from utils import generate_matches, get_session_stats, get_current_round_stats
 from keyboards import get_main_menu_keyboard, get_new_round_keyboard
 
-# Настройка логов
+# Настройка логирования
 logging.basicConfig(
-    level=logging.INFO,  # Уровень логирования (INFO для основных событий)
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler("tennis_bot.log"),  # Логи в файл
-        logging.StreamHandler()  # Логи в консоль
-    ]
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
@@ -20,6 +16,7 @@ logger = logging.getLogger(__name__)
 REGISTER_PLAYERS, GENERATE_GRID, PLAY_MATCH, VIEW_STATS = range(4)
 
 async def start(update: Update, context: CallbackContext) -> int:
+    """Обработчик для команды /start."""
     logger.info(f"Начата новая сессия в чате {update.message.chat_id}.")
     await update.message.reply_text(
         "Привет! Давай начнем новую сессию. Введи имена игроков через запятую.",
@@ -28,6 +25,7 @@ async def start(update: Update, context: CallbackContext) -> int:
     return REGISTER_PLAYERS
 
 async def register_players(update: Update, context: CallbackContext) -> int:
+    """Регистрирует игроков и создает сессию."""
     players = update.message.text.split(',')
     players = [player.strip() for player in players if player.strip()]
 
@@ -56,8 +54,9 @@ async def register_players(update: Update, context: CallbackContext) -> int:
     return await generate_grid(update, context)
 
 async def generate_grid(update: Update, context: CallbackContext) -> int:
+    """Генерирует сетку матчей для текущего круга."""
     session_id = context.user_data['session_id']
-    round_number = context.user_data.get('round_number', 1)  # Получаем текущий номер круга
+    round_number = context.user_data.get('round_number', 1)
 
     # Увеличиваем номер круга на 1
     round_number += 1
@@ -89,6 +88,7 @@ async def generate_grid(update: Update, context: CallbackContext) -> int:
     return PLAY_MATCH
 
 async def play_match(update: Update, context: CallbackContext) -> int:
+    """Обрабатывает текущий матч и запрашивает победителя."""
     session_id = context.user_data['session_id']
     logger.debug(f"Текущий session_id: {session_id}")
 
@@ -134,6 +134,7 @@ async def play_match(update: Update, context: CallbackContext) -> int:
     return PLAY_MATCH
 
 async def handle_winner(update: Update, context: CallbackContext) -> int:
+    """Обрабатывает выбор победителя и переходит к следующему матчу."""
     winner_name = update.message.text
     match_id, player1, player2 = context.user_data['current_match']
 
@@ -163,9 +164,9 @@ async def handle_winner(update: Update, context: CallbackContext) -> int:
     return await play_match(update, context)
 
 async def view_stats(update: Update, context: CallbackContext) -> int:
+    """Показывает статистику за текущий круг и общую статистику."""
     session_id = context.user_data['session_id']
-    round_number = context.user_data.get('round_number', 1)  # Получаем текущий номер круга
-    logger.info(f"Запрошена статистика для сессии {session_id}, круг {round_number}.")
+    round_number = context.user_data.get('round_number', 1)
 
     # Получаем статистику за текущий круг
     stats_current_round = get_current_round_stats(session_id, round_number)
@@ -186,6 +187,7 @@ async def view_stats(update: Update, context: CallbackContext) -> int:
     return VIEW_STATS
 
 async def end_game(update: Update, context: CallbackContext) -> int:
+    """Завершает игру и показывает итоговую статистику."""
     session_id = context.user_data['session_id']
     logger.info(f"Игра завершена в сессии {session_id}.")
 

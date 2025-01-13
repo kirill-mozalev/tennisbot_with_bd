@@ -3,7 +3,7 @@ from telegram import ReplyKeyboardMarkup
 def get_main_menu_keyboard():
     """Клавиатура для главного меню."""
     keyboard = [
-        ["Начать игру", "Статистика"],
+        ["Начать игру"],
         ["Завершить игру"]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
@@ -20,5 +20,13 @@ def get_new_round_keyboard():
     """Клавиатура для нового круга."""
     keyboard = [
         ["Новый круг", "Завершить игру"]
+    ]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+def get_end_game_keyboard():
+    """Клавиатура после завершения игры."""
+    keyboard = [
+        ["Статистика"],  # Кнопка "Статистика" (пока что без логики)
+        ["Начать новую игру"]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)

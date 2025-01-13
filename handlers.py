@@ -3,7 +3,7 @@ from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import CallbackContext, ConversationHandler, CommandHandler, MessageHandler, filters
 from database import create_connection
 from utils import generate_matches, get_session_stats, get_current_round_stats
-from keyboards import get_main_menu_keyboard, get_new_round_keyboard
+from keyboards import get_main_menu_keyboard, get_winner_keyboard, get_new_round_keyboard, get_end_game_keyboard
 
 # Настройка логирования
 logging.basicConfig(
@@ -187,21 +187,19 @@ async def view_stats(update: Update, context: CallbackContext) -> int:
     return VIEW_STATS
 
 async def end_game(update: Update, context: CallbackContext) -> int:
-    """Завершает игру и показывает итоговую статистику."""
+    """Завершает игру и показывает клавиатуру с кнопкой 'Статистика'."""
     session_id = context.user_data['session_id']
     logger.info(f"Игра завершена в сессии {session_id}.")
 
-    # Получаем общую статистику по всем кругам
-    stats = get_session_stats(session_id)
+    # Логируем вызов функции get_end_game_keyboard
+    logger.info("Вызов функции get_end_game_keyboard.")
+    reply_markup = get_end_game_keyboard()
 
-    # Формируем текст статистики
-    stats_text = "Общая статистика за игру:\n"
-    for player, wins in stats:
-        stats_text += f"{player}: {wins} побед\n"
-
-    # Выводим статистику
-    await update.message.reply_text(stats_text, reply_markup=get_main_menu_keyboard())
+    # Сообщение о завершении игры
+    await update.message.reply_text(
+        "Игра завершена. Нажми 'Статистика', чтобы увидеть результаты (логика позже).",
+        reply_markup=reply_markup
+    )
 
     # Завершаем игру
-    await update.message.reply_text("Игра завершена. Спасибо за игру!", reply_markup=get_main_menu_keyboard())
     return ConversationHandler.END

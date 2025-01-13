@@ -1,15 +1,7 @@
-import logging
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ConversationHandler, filters
 from handlers import start, register_players, generate_grid, play_match, handle_winner, view_stats, end_game, REGISTER_PLAYERS, GENERATE_GRID, PLAY_MATCH, VIEW_STATS
 from config import BOT_TOKEN
 from database import initialize_database
-
-# Настройка логирования
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 def main():
     # Инициализация базы данных
@@ -33,14 +25,16 @@ def main():
                 MessageHandler(filters.TEXT & filters.Regex("^Завершить игру$"), end_game)
             ],
         },
-        fallbacks=[]
+        fallbacks=[
+            # Игнорируем кнопку "Статистика" (пока что)
+            MessageHandler(filters.TEXT & filters.Regex("^Статистика$"), lambda update, context: None)
+        ]
     )
 
     # Добавляем ConversationHandler в приложение
     application.add_handler(conv_handler)
 
     # Запускаем бота
-    logger.info("Бот запущен.")
     application.run_polling()
 
 if __name__ == '__main__':

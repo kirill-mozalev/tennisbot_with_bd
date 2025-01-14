@@ -187,19 +187,18 @@ async def view_stats(update: Update, context: CallbackContext) -> int:
     return VIEW_STATS
 
 async def end_game(update: Update, context: CallbackContext) -> int:
-    """Завершает игру и показывает клавиатуру с кнопкой 'Статистика'."""
-    session_id = context.user_data['session_id']
+    """Завершает игру и показывает клавиатуру с кнопкой 'Начать новую игру'."""
+    session_id = context.user_data.get('session_id', None)
     logger.info(f"Игра завершена в сессии {session_id}.")
 
-    # Логируем вызов функции get_end_game_keyboard
-    logger.info("Вызов функции get_end_game_keyboard.")
-    reply_markup = get_end_game_keyboard()
+    # Удаляем данные сессии из контекста
+    context.user_data.clear()
 
-    # Сообщение о завершении игры
+    # Показать клавиатуру с кнопкой "Начать новую игру"
+    reply_markup = get_end_game_keyboard()
     await update.message.reply_text(
-        "Игра завершена. Нажми 'Статистика', чтобы увидеть результаты (логика позже).",
+        "Игра завершена. Нажми 'Начать новую игру', чтобы зарегистрировать новых игроков.",
         reply_markup=reply_markup
     )
 
-    # Завершаем игру
-    return ConversationHandler.END
+    return VIEW_STATS  # Ожидание действия пользователя (новая игра или статистика)

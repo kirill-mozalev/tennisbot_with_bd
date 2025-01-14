@@ -17,16 +17,19 @@ def main():
             REGISTER_PLAYERS: [MessageHandler(filters.TEXT, register_players)],
             GENERATE_GRID: [MessageHandler(filters.TEXT & filters.Regex("^Начать игру$"), generate_grid)],
             PLAY_MATCH: [
-                MessageHandler(filters.TEXT & ~filters.Regex("^(Начать игру|Статистика|Завершить игру)$"), handle_winner),
+                MessageHandler(
+                    filters.TEXT & ~filters.Regex("^(Начать игру|Статистика|Завершить игру|Начать новую игру)$"),
+                    handle_winner),
                 MessageHandler(filters.TEXT & filters.Regex("^Начать игру$"), play_match)
             ],
             VIEW_STATS: [
                 MessageHandler(filters.TEXT & filters.Regex("^Новый круг$"), generate_grid),
-                MessageHandler(filters.TEXT & filters.Regex("^Завершить игру$"), end_game)
+                MessageHandler(filters.TEXT & filters.Regex("^Завершить игру$"), end_game),
+                MessageHandler(filters.TEXT & filters.Regex("^Начать новую игру$"), start)
+                # Добавляем переход на начало
             ],
         },
         fallbacks=[
-            # Игнорируем кнопку "Статистика" (пока что)
             MessageHandler(filters.TEXT & filters.Regex("^Статистика$"), lambda update, context: None)
         ]
     )

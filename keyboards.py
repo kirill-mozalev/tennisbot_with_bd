@@ -26,7 +26,7 @@ def get_new_round_keyboard():
 def get_end_game_keyboard():
     """Клавиатура после завершения игры."""
     keyboard = [
-        ["Статистика"],  # Кнопка "Статистика" (пока что без логики)
-        ["Начать новую игру"]
+        ["Начать новую игру"],  # Кнопка для новой игры
+        ["Статистика"]  # Кнопка для просмотра статистики
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)

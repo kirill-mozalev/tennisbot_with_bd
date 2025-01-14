@@ -30,3 +30,11 @@ def get_end_game_keyboard():
         ["Статистика"]  # Кнопка для просмотра статистики
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+def get_play_match_keyboard():
+    """Клавиатура для состояния PLAY_MATCH."""
+    keyboard = [
+        ["Пропустить матч"],
+        ["Завершить игру сейчас"]  # Новая кнопка
+    ]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)

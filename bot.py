@@ -1,5 +1,5 @@
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ConversationHandler, filters
-from handlers import start, register_players, generate_grid, play_match, handle_winner, view_stats, end_game, REGISTER_PLAYERS, GENERATE_GRID, PLAY_MATCH, VIEW_STATS
+from handlers import start, register_players, generate_grid, play_match, handle_winner, view_stats, end_game, REGISTER_PLAYERS, GENERATE_GRID, PLAY_MATCH, VIEW_STATS,force_end_game
 from config import BOT_TOKEN
 from database import initialize_database
 
@@ -18,19 +18,21 @@ def main():
             GENERATE_GRID: [MessageHandler(filters.TEXT & filters.Regex("^Начать игру$"), generate_grid)],
             PLAY_MATCH: [
                 MessageHandler(
-                    filters.TEXT & ~filters.Regex("^(Начать игру|Статистика|Завершить игру|Начать новую игру)$"),
-                    handle_winner),
-                MessageHandler(filters.TEXT & filters.Regex("^Начать игру$"), play_match)
+                    filters.TEXT & ~filters.Regex("^(Начать игру|Статистика|Завершить игру|Завершить игру сейчас)$"),
+                    handle_winner
+                ),
+                MessageHandler(filters.TEXT & filters.Regex("^Начать игру$"), play_match),
+                MessageHandler(filters.TEXT & filters.Regex("^Завершить игру сейчас$"), force_end_game)
             ],
             VIEW_STATS: [
                 MessageHandler(filters.TEXT & filters.Regex("^Новый круг$"), generate_grid),
-                MessageHandler(filters.TEXT & filters.Regex("^Завершить игру$"), end_game),
-                MessageHandler(filters.TEXT & filters.Regex("^Начать новую игру$"), start)
-                # Добавляем переход на начало
+                MessageHandler(filters.TEXT & filters.Regex("^Завершить игру$"), end_game)
             ],
         },
         fallbacks=[
-            MessageHandler(filters.TEXT & filters.Regex("^Статистика$"), lambda update, context: None)
+            MessageHandler(filters.TEXT & filters.Regex("^Статистика$"), lambda update, context: None),
+            MessageHandler(filters.TEXT & filters.Regex("^Начать новую игру$"), start),
+            # Обрабатываем кнопку "Начать новую игру"
         ]
     )
 

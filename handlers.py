@@ -128,10 +128,11 @@ async def play_match(update: Update, context: CallbackContext) -> int:
     # Сохраняем текущий матч в контексте
     context.user_data['current_match'] = (match_id, player1[0], player2[0])
 
-    # Создаем клавиатуру с именами игроков
+    # Создаем клавиатуру с именами игроков и кнопкой "Завершить игру сейчас"
     keyboard = [
         [player1[0], player2[0]],
-        ["Пропустить матч"]
+        ["Пропустить матч"],
+        ["Завершить игру сейчас"]  # Новая кнопка
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
@@ -214,7 +215,7 @@ async def end_game(update: Update, context: CallbackContext) -> int:
     session_id = context.user_data.get('session_id', None)
     logger.info(f"Игра завершена в сессии {session_id}.")
 
-    # Удаляем данные сессии из контекста
+    # Очищаем данные сессии
     context.user_data.clear()
 
     # Показать клавиатуру с кнопкой "Начать новую игру"
@@ -224,4 +225,80 @@ async def end_game(update: Update, context: CallbackContext) -> int:
         reply_markup=reply_markup
     )
 
-    return VIEW_STATS  # Ожидание действия пользователя (новая игра или статистика)
+    # Возвращаемся в состояние регистрации игроков
+    return REGISTER_PLAYERS  # Вернуться к регистрации игроков
+
+
+import logging
+
+# Настроим логгер
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+
+async def force_end_game(update: Update, context: CallbackContext) -> int:
+    """Принудительное завершение игры и вывод статистики."""
+
+    # Логируем начало выполнения функции
+    logger.debug("force_end_game started.")
+
+    # Получаем session_id из данных пользователя
+    session_id = context.user_data.get('session_id')
+
+    # Логируем session_id
+    logger.debug(f"session_id: {session_id}")
+
+    # Если session_id не найден, выводим сообщение и завершаем сессию
+    if not session_id:
+        logger.debug("Session not found.")
+        await update.message.reply_text("Сессия не найдена. Начните новую игру.", reply_markup=get_main_menu_keyboard())
+        return ConversationHandler.END
+
+    # Получаем статистику за текущий круг
+    round_number = context.user_data.get('round_number', 1)
+    stats_current_round = get_current_round_stats(session_id, round_number)
+    logger.debug(f"Stats for current round: {stats_current_round}")
+
+    stats_text_current = "Статистика за текущий круг:\n"
+
+    # Формируем текст для статистики текущего круга
+    if stats_current_round:
+        for player, wins in stats_current_round:
+            stats_text_current += f"{player}: {wins} побед\n"
+    else:
+        stats_text_current += "Нет данных для текущего круга.\n"
+
+    # Получаем общую статистику за всю игру
+    stats_total = get_session_stats(session_id)
+    logger.debug(f"Total stats: {stats_total}")
+
+    stats_text_total = "Общая статистика за игру:\n"
+
+    # Формируем текст для общей статистики
+    if stats_total:
+        for player, wins in stats_total:
+            stats_text_total += f"{player}: {wins} побед\n"
+    else:
+        stats_text_total += "Нет общей статистики.\n"
+
+    # Отправляем статистику текущего круга и всей игры
+    await update.message.reply_text(stats_text_current)
+    await update.message.reply_text(stats_text_total)
+
+    # Очищаем данные пользователя
+    context.user_data.clear()
+
+    # Логируем очистку данных
+    logger.debug("User data cleared.")
+
+    # Показываем клавиатуру с кнопками "Начать новую игру" и "Статистика"
+    await update.message.reply_text(
+        "Игра завершена. Выберите действие:",
+        reply_markup=get_end_game_keyboard()
+    )
+
+    # Логируем, что игра завершена
+    logger.debug("End game keyboard sent.")
+
+    # Возвращаем пользователя в состояние начала новой игры
+    return ConversationHandler.END

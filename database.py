@@ -36,7 +36,7 @@ def initialize_database():
     )
     ''')
 
-    # Создаем таблицу matches
+    # Создаем таблицу matches с новой колонкой is_skipped
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS matches (
         match_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,6 +45,7 @@ def initialize_database():
         player1_id INTEGER NOT NULL,
         player2_id INTEGER NOT NULL,
         winner_id INTEGER,
+        is_skipped INTEGER DEFAULT 0,  -- Новая колонка для отслеживания пропущенных матчей
         FOREIGN KEY (session_id) REFERENCES sessions (session_id),
         FOREIGN KEY (player1_id) REFERENCES players (player_id),
         FOREIGN KEY (player2_id) REFERENCES players (player_id),
@@ -54,4 +55,4 @@ def initialize_database():
 
     conn.commit()
     conn.close()
-    logger.info("База данных инициализирована.")
+    logger.info("База данных инициализирована с новой колонкой is_skipped.")

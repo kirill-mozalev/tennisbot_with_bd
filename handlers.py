@@ -87,6 +87,7 @@ async def generate_grid(update: Update, context: CallbackContext) -> int:
     conn.close()
     return PLAY_MATCH
 
+
 async def play_match(update: Update, context: CallbackContext) -> int:
     """Обрабатывает текущий матч и запрашивает победителя."""
     session_id = context.user_data['session_id']
@@ -95,18 +96,28 @@ async def play_match(update: Update, context: CallbackContext) -> int:
     conn = create_connection()
     cursor = conn.cursor()
 
-    # Получаем следующий матч без победителя
-    cursor.execute('''
+    # Получаем следующий матч без победителя или пропущенный матч
+    cursor.execute(''' 
     SELECT match_id, player1_id, player2_id FROM matches
-    WHERE session_id = ? AND winner_id IS NULL
+    WHERE session_id = ? AND winner_id IS NULL AND is_skipped = 0
     LIMIT 1
     ''', (session_id,))
     match = cursor.fetchone()
 
     if not match:
-        logger.info(f"Все матчи круга сыграны в сессии {session_id}.")
-        await update.message.reply_text("Все матчи круга сыграны. Вот статистика за круг:", reply_markup=get_main_menu_keyboard())
-        return await view_stats(update, context)
+        # Если нет матчей без победителя, проверяем пропущенные
+        cursor.execute('''
+        SELECT match_id, player1_id, player2_id FROM matches
+        WHERE session_id = ? AND winner_id IS NULL AND is_skipped = 1
+        LIMIT 1
+        ''', (session_id,))
+        match = cursor.fetchone()
+
+        if not match:
+            logger.info(f"Все матчи круга сыграны в сессии {session_id}.")
+            await update.message.reply_text("Все матчи круга сыграны. Вот статистика за круг:",
+                                            reply_markup=get_main_menu_keyboard())
+            return await view_stats(update, context)
 
     match_id, player1_id, player2_id = match
 
@@ -133,6 +144,7 @@ async def play_match(update: Update, context: CallbackContext) -> int:
     conn.close()
     return PLAY_MATCH
 
+
 async def handle_winner(update: Update, context: CallbackContext) -> int:
     """Обрабатывает выбор победителя и переходит к следующему матчу."""
     winner_name = update.message.text
@@ -140,14 +152,23 @@ async def handle_winner(update: Update, context: CallbackContext) -> int:
 
     if winner_name == "Пропустить матч":
         logger.info(f"Матч {player1} vs {player2} пропущен в сессии {context.user_data['session_id']}.")
+
+        # Помечаем матч как пропущенный
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute('UPDATE matches SET is_skipped = 1 WHERE match_id = ?', (match_id,))
+        conn.commit()
+        conn.close()
+
         await update.message.reply_text("Матч пропущен.", reply_markup=get_main_menu_keyboard())
-        return await play_match(update, context)
+        return await play_match(update, context)  # Переходим к следующему матчу
 
     conn = create_connection()
     cursor = conn.cursor()
 
     # Получаем ID победителя
-    cursor.execute('SELECT player_id FROM players WHERE name = ? AND session_id = ?', (winner_name, context.user_data['session_id']))
+    cursor.execute('SELECT player_id FROM players WHERE name = ? AND session_id = ?',
+                   (winner_name, context.user_data['session_id']))
     winner = cursor.fetchone()
 
     if winner:
@@ -155,13 +176,15 @@ async def handle_winner(update: Update, context: CallbackContext) -> int:
         cursor.execute('UPDATE matches SET winner_id = ? WHERE match_id = ?', (winner_id, match_id))
         conn.commit()
         logger.info(f"Победитель {winner_name} сохранен в матче {player1} vs {player2}.")
-        await update.message.reply_text(f"Победитель {winner_name} сохранен. Следующий матч...", reply_markup=get_main_menu_keyboard())
+        await update.message.reply_text(f"Победитель {winner_name} сохранен. Следующий матч...",
+                                        reply_markup=get_main_menu_keyboard())
     else:
         logger.warning(f"Ошибка: игрок {winner_name} не найден в сессии {context.user_data['session_id']}.")
         await update.message.reply_text("Ошибка: игрок не найден.", reply_markup=get_main_menu_keyboard())
 
     conn.close()
     return await play_match(update, context)
+
 
 async def view_stats(update: Update, context: CallbackContext) -> int:
     """Показывает статистику за текущий круг и общую статистику."""

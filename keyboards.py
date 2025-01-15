@@ -3,8 +3,7 @@ from telegram import ReplyKeyboardMarkup
 def get_main_menu_keyboard():
     """Клавиатура для главного меню."""
     keyboard = [
-        ["Начать игру"],
-        ["Завершить игру"]
+        ["Начать игру"]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 

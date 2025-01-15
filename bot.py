@@ -1,6 +1,6 @@
 import time,logging
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ConversationHandler, filters
-from handlers import start, register_players, generate_grid, play_match, handle_winner, view_stats, end_game, REGISTER_PLAYERS, GENERATE_GRID, PLAY_MATCH, VIEW_STATS,force_end_game, show_monthly_stats
+from handlers import start, register_players, generate_grid, play_match, handle_winner, view_stats, end_game, REGISTER_PLAYERS, GENERATE_GRID, PLAY_MATCH, VIEW_STATS,force_end_game, show_monthly_stats,clear_database
 from config import BOT_TOKEN
 from database import initialize_database
 from telegram.error import TelegramError
@@ -51,6 +51,9 @@ def main():
 
             # Добавляем ConversationHandler в приложение
             application.add_handler(conv_handler)
+
+            # Добавляем команду для очистки базы данных
+            application.add_handler(CommandHandler('cleardb', clear_database))
 
             # Запускаем бота
             application.run_polling()

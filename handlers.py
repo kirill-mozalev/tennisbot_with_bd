@@ -314,3 +314,28 @@ async def show_monthly_stats(update: Update, context: CallbackContext) -> int:
     await update.message.reply_text(stats_text, reply_markup=get_end_game_keyboard())
 
     return VIEW_STATS
+
+async def clear_database(update: Update, context: CallbackContext) -> int:
+    """Очищает базу данных (доступно только администратору)."""
+    # Ваш chat_id (замените на ваш реальный chat_id)
+    ADMIN_CHAT_ID = 429601028  # Пример, замените на ваш chat_id
+
+    # Проверяем, что команду вызвал администратор
+    if update.message.chat_id != ADMIN_CHAT_ID:
+        await update.message.reply_text("У вас нет прав для выполнения этой команды.")
+        return ConversationHandler.END
+
+    # Очищаем базу данных
+    conn = create_connection()
+    cursor = conn.cursor()
+
+    # Удаляем все данные из таблиц
+    cursor.execute('DELETE FROM matches')
+    cursor.execute('DELETE FROM players')
+    cursor.execute('DELETE FROM sessions')
+
+    conn.commit()
+    conn.close()
+
+    await update.message.reply_text("База данных успешно очищена.")
+    return ConversationHandler.END

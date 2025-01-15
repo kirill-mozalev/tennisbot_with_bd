@@ -1,10 +1,15 @@
 import logging
+from datetime import datetime
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import CallbackContext, ConversationHandler, CommandHandler, MessageHandler, filters
 from database import create_connection
-from utils import generate_matches, get_session_stats, get_current_round_stats
+from utils import generate_matches, get_session_stats, get_current_round_stats,get_monthly_stats
 from keyboards import get_main_menu_keyboard, get_winner_keyboard, get_new_round_keyboard, get_end_game_keyboard
 
+
+# Настроим логгер
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 # Настройка логирования
 logging.basicConfig(
     level=logging.INFO,
@@ -215,8 +220,11 @@ async def end_game(update: Update, context: CallbackContext) -> int:
     session_id = context.user_data.get('session_id', None)
     logger.info(f"Игра завершена в сессии {session_id}.")
 
-    # Очищаем данные сессии
-    context.user_data.clear()
+    # Очищаем только данные, связанные с текущей игрой
+    if 'session_id' in context.user_data:
+        del context.user_data['session_id']
+    if 'round_number' in context.user_data:
+        del context.user_data['round_number']
 
     # Показать клавиатуру с кнопкой "Начать новую игру"
     reply_markup = get_end_game_keyboard()
@@ -225,15 +233,8 @@ async def end_game(update: Update, context: CallbackContext) -> int:
         reply_markup=reply_markup
     )
 
-    # Возвращаемся в состояние регистрации игроков
-    return REGISTER_PLAYERS  # Вернуться к регистрации игроков
-
-
-import logging
-
-# Настроим логгер
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+    # Возвращаемся в состояние VIEW_STATS, чтобы кнопка "Статистика" работала
+    return VIEW_STATS
 
 
 async def force_end_game(update: Update, context: CallbackContext) -> int:
@@ -276,7 +277,10 @@ async def force_end_game(update: Update, context: CallbackContext) -> int:
     await update.message.reply_text(stats_text_total)
 
     # Очищаем данные пользователя
-    context.user_data.clear()
+    if 'session_id' in context.user_data:
+        del context.user_data['session_id']
+    if 'round_number' in context.user_data:
+        del context.user_data['round_number']
     logger.debug("User data cleared.")
 
     # Показываем клавиатуру с кнопками "Начать новую игру" и "Статистика"
@@ -287,5 +291,26 @@ async def force_end_game(update: Update, context: CallbackContext) -> int:
 
     logger.debug("End game keyboard sent.")
 
-    # Возвращаем пользователя в состояние начала новой игры
-    return REGISTER_PLAYERS  # Возвращаемся в состояние регистрации игроков
+    # Возвращаем пользователя в состояние VIEW_STATS, чтобы кнопка "Статистика" работала
+    return VIEW_STATS
+
+async def show_monthly_stats(update: Update, context: CallbackContext) -> int:
+    """Показывает статистику игроков и их побед за текущий месяц."""
+    chat_id = update.message.chat_id
+
+    # Получаем статистику за текущий месяц
+    stats = get_monthly_stats(chat_id)
+
+    if not stats:
+        await update.message.reply_text("В текущем месяце ещё нет данных о победителях.")
+        return VIEW_STATS
+
+    # Формируем текст для вывода статистики
+    stats_text = "Статистика за текущий месяц:\n"
+    for player, wins in stats:
+        stats_text += f"{player}: {wins} побед\n"
+
+    # Отправляем статистику пользователю
+    await update.message.reply_text(stats_text, reply_markup=get_end_game_keyboard())
+
+    return VIEW_STATS

@@ -1,7 +1,7 @@
 import logging
 from database import create_connection
 from itertools import combinations
-
+from datetime import datetime, timedelta
 # Настройка логирования
 logging.basicConfig(
     level=logging.INFO,
@@ -44,8 +44,10 @@ def generate_matches(session_id, round_number):
     # Сохраняем матчи в базу данных
     for match in scheduled_matches:
         player1, player2, _ = match
-        cursor.execute('INSERT INTO matches (session_id, round_number, player1_id, player2_id) VALUES (?, ?, ?, ?)',
-                       (session_id, round_number, player1, player2))
+        cursor.execute('''
+                INSERT INTO matches (session_id, round_number, player1_id, player2_id, created_at)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ''', (session_id, round_number, player1, player2))
 
     conn.commit()
     conn.close()
@@ -89,4 +91,39 @@ def get_current_round_stats(session_id, round_number):
 
     conn.close()
     logger.info(f"Статистика за круг {round_number} в сессии {session_id} получена.")
+    return stats
+
+def get_monthly_stats(chat_id=None):
+    """Возвращает статистику игроков и их побед за текущий месяц."""
+    conn = create_connection()
+    cursor = conn.cursor()
+
+    # Получаем начало и конец текущего месяца
+    today = datetime.today()
+    first_day_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    last_day_of_month = (first_day_of_month + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+
+    # Базовый запрос для получения статистики
+    query = '''
+    SELECT p.name, COUNT(m.winner_id) as wins
+    FROM players p
+    LEFT JOIN matches m ON p.player_id = m.winner_id
+    WHERE m.winner_id IS NOT NULL
+    AND m.created_at BETWEEN ? AND ?
+    '''
+
+    # Если передан chat_id, фильтруем по нему
+    if chat_id:
+        query += ' AND p.session_id IN (SELECT session_id FROM sessions WHERE chat_id = ?)'
+        params = (first_day_of_month.strftime('%Y-%m-%d %H:%M:%S'), last_day_of_month.strftime('%Y-%m-%d %H:%M:%S'), chat_id)
+    else:
+        params = (first_day_of_month.strftime('%Y-%m-%d %H:%M:%S'), last_day_of_month.strftime('%Y-%m-%d %H:%M:%S'))
+
+    query += ' GROUP BY p.name ORDER BY wins DESC'
+
+    cursor.execute(query, params)
+    stats = cursor.fetchall()
+
+    conn.close()
+    logger.info(f"Статистика за текущий месяц получена: {stats}")
     return stats

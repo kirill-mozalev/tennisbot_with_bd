@@ -45,7 +45,8 @@ def initialize_database():
         player1_id INTEGER NOT NULL,
         player2_id INTEGER NOT NULL,
         winner_id INTEGER,
-        is_skipped INTEGER DEFAULT 0,  -- Новая колонка для отслеживания пропущенных матчей
+        is_skipped INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (session_id) REFERENCES sessions (session_id),
         FOREIGN KEY (player1_id) REFERENCES players (player_id),
         FOREIGN KEY (player2_id) REFERENCES players (player_id),

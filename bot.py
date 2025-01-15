@@ -1,5 +1,5 @@
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ConversationHandler, filters
-from handlers import start, register_players, generate_grid, play_match, handle_winner, view_stats, end_game, REGISTER_PLAYERS, GENERATE_GRID, PLAY_MATCH, VIEW_STATS,force_end_game
+from handlers import start, register_players, generate_grid, play_match, handle_winner, view_stats, end_game, REGISTER_PLAYERS, GENERATE_GRID, PLAY_MATCH, VIEW_STATS,force_end_game, show_monthly_stats
 from config import BOT_TOKEN
 from database import initialize_database
 
@@ -26,11 +26,11 @@ def main():
             ],
             VIEW_STATS: [
                 MessageHandler(filters.TEXT & filters.Regex("^Новый круг$"), generate_grid),
-                MessageHandler(filters.TEXT & filters.Regex("^Завершить игру$"), end_game)
+                MessageHandler(filters.TEXT & filters.Regex("^Завершить игру$"), end_game),
+                MessageHandler(filters.TEXT & filters.Regex("^Статистика$"), show_monthly_stats)  # Новый обработчик
             ],
         },
         fallbacks=[
-            MessageHandler(filters.TEXT & filters.Regex("^Статистика$"), lambda update, context: None),
             MessageHandler(filters.TEXT & filters.Regex("^Начать новую игру$"), start),
         ]
     )

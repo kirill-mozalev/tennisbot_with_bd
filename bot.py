@@ -32,7 +32,6 @@ def main():
         fallbacks=[
             MessageHandler(filters.TEXT & filters.Regex("^Статистика$"), lambda update, context: None),
             MessageHandler(filters.TEXT & filters.Regex("^Начать новую игру$"), start),
-            # Обрабатываем кнопку "Начать новую игру"
         ]
     )
 

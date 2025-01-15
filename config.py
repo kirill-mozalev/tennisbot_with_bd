@@ -1,5 +1,11 @@
+import os
+from dotenv import load_dotenv
+
+# Загружаем переменные окружения из файла .env
+load_dotenv()
+
 # Токен бота
-BOT_TOKEN = "8149884840:AAE6bG_WFHdbqbSThJD1rXoo5Mi_4OWkR4U"
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # Имя файла базы данных
-DATABASE_NAME = "tennis_bot.db"
+DATABASE_NAME = os.getenv("DATABASE_NAME")

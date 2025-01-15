@@ -3,9 +3,13 @@ from database import create_connection
 from itertools import combinations
 from datetime import datetime, timedelta
 # Настройка логирования
+
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("bot_logs.txt"),  # Логи будут записываться в файл bot_logs.txt
+    ]
 )
 logger = logging.getLogger(__name__)
 

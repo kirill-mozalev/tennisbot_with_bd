@@ -7,13 +7,13 @@ from utils import generate_matches, get_session_stats, get_current_round_stats,g
 from keyboards import get_main_menu_keyboard, get_winner_keyboard, get_new_round_keyboard, get_end_game_keyboard
 
 
-# Настроим логгер
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-# Настройка логирования
+# Настройка логгера
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("bot_logs.txt"),  # Логи будут записываться в файл bot_logs.txt
+    ]
 )
 logger = logging.getLogger(__name__)
 

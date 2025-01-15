@@ -5,7 +5,10 @@ from config import DATABASE_NAME
 # Настройка логирования
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("bot_logs.txt"),  # Логи будут записываться в файл bot_logs.txt
+    ]
 )
 logger = logging.getLogger(__name__)
 
@@ -56,4 +59,4 @@ def initialize_database():
 
     conn.commit()
     conn.close()
-    logger.info("База данных инициализирована с новой колонкой is_skipped.")
+    logger.info("База данных инициализирована")
